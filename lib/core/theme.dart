@@ -11,7 +11,14 @@ abstract final class DemoTheme {
   static const negative = Color(0xFFD93025);
 
   static ThemeData get light {
-    final scheme = ColorScheme.fromSeed(seedColor: seed, surface: Colors.white);
+    // `primary` is pinned rather than left to the tonal palette: the deck and
+    // the app should be the same blue on the projector.
+    final scheme = ColorScheme.fromSeed(
+      seedColor: seed,
+      primary: seed,
+      onPrimary: Colors.white,
+      surface: Colors.white,
+    );
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
