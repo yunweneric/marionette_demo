@@ -21,9 +21,7 @@ void main() {
   }
 
   final logs = PrintLogCollector();
-  MarionetteBinding.ensureInitialized(
-    MarionetteConfiguration(logCollector: logs),
-  );
+  MarionetteBinding.ensureInitialized(MarionetteConfiguration(logCollector: logs));
 
   runZoned(
     () => runApp(const MarionetteDemoApp()),
