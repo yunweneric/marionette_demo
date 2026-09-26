@@ -1,5 +1,6 @@
 /// One line of money movement. A positive [amount] came in, a negative one
-/// went out — the sign is the only thing that says which.
+/// went out — the sign is the only thing that says which, which is exactly
+/// the kind of convention a filter gets wrong.
 class Transaction {
   const Transaction({
     required this.id,
@@ -28,6 +29,14 @@ enum TransactionFilter {
   final String label;
 }
 
+/// Fixed data, never shuffled and never fetched: the same six rows every
+/// launch, so the presenter knows what the screen should say and the agent's
+/// report can be checked against it live.
+///
+/// Three income rows and three expense rows, so a filter that inverts them
+/// returns a plausible-looking list rather than an obviously empty one. A bug
+/// that shows nothing is spotted in a second; a bug that shows the wrong
+/// three rows is the one that reaches production.
 const demoTransactions = <Transaction>[
   Transaction(
     id: 't1',

@@ -4,6 +4,12 @@ import 'package:marionette_demo/features/transactions/transaction.dart';
 
 /// The dashboard's recent-activity section, with the filter chips the support
 /// ticket in DEMO.md is about.
+///
+/// Three keys matter to the agent here: `transactions_filter_all`,
+/// `transactions_filter_income` and `transactions_filter_expenses`, built
+/// from the enum so they cannot drift from the labels. Each row is keyed by
+/// transaction id, so "which rows are on screen" is a cheap question —
+/// `get_interactive_elements`, no screenshot needed.
 class TransactionList extends StatefulWidget {
   const TransactionList({super.key, required this.transactions});
 
@@ -30,6 +36,9 @@ class _TransactionListState extends State<TransactionList> {
     }
   }
 
+  /// The header figure, computed straight from [Transaction.isIncome] rather
+  /// than through [_matches]. Two independent readings of the same idea: if
+  /// they ever disagree on screen, one of them is wrong.
   int get _monthIncome => widget.transactions
       .where((t) => t.isIncome)
       .fold(0, (sum, t) => sum + t.amount);
