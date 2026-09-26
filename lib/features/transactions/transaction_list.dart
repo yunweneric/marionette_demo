@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:marionette_demo/core/theme.dart';
 import 'package:marionette_demo/features/transactions/transaction.dart';
 
-/// The dashboard's recent-activity section, with the filter chips the support
-/// ticket in DEMO.md is about.
+/// The dashboard's recent-activity section: All / Income / Expenses, where a
+/// filter matches on the sign of the amount.
 ///
 /// Three keys matter to the agent here: `transactions_filter_all`,
 /// `transactions_filter_income` and `transactions_filter_expenses`, built
@@ -30,9 +30,9 @@ class _TransactionListState extends State<TransactionList> {
       case TransactionFilter.all:
         return true;
       case TransactionFilter.income:
-        return transaction.amount.isNegative;
+        return transaction.isIncome;
       case TransactionFilter.expenses:
-        return !transaction.amount.isNegative;
+        return !transaction.isIncome;
     }
   }
 

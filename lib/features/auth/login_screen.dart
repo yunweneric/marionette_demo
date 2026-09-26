@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:marionette_demo/core/theme.dart';
 import 'package:marionette_demo/features/auth/fake_auth_service.dart';
+import 'package:marionette_demo/features/auth/signup_screen.dart';
 import 'package:marionette_demo/features/dashboard/dashboard_screen.dart';
 
 /// Demo 01 — "Can you see my app?" · Demo 02 — "Can you use my app?"
@@ -222,13 +223,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         key: const Key('login_signup_button'),
                         onPressed: () {
                           debugPrint('[login] sign up tapped');
-                          ScaffoldMessenger.of(context)
-                            ..clearSnackBars()
-                            ..showSnackBar(
-                              const SnackBar(
-                                content: Text('Sign-up arrives in demo 04'),
-                              ),
-                            );
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const SignupScreen(),
+                            ),
+                          );
                         },
                         child: const Text('Sign up'),
                       ),
