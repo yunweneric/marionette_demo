@@ -2,21 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:marionette_demo/core/theme.dart';
 import 'package:marionette_demo/features/dashboard/dashboard_screen.dart';
 
-/// Demo 04 — "Can you verify your own work?"
+/// The finished state of demo 04, kept on `main` as the reference the branch
+/// is diffed against on stage.
 ///
-/// The form has no validation at all. An empty submit creates an account, and
-/// so does "not-an-email". That is the task: the agent adds the rules, then
-/// drives every state in the running app to prove they hold.
+/// Validation is per field and shown in place, and it only starts nagging
+/// after the first submit — `onUserInteraction` from the first keystroke
+/// marks a form red before anybody has finished typing their name.
 ///
-/// Two details that make the demo work. The fields are plain `TextField`s,
-/// so the agent has to choose its own approach — `Form` plus validators, or
-/// error state held here and rendered as keyed `Text`. And the submit is
-/// slow enough (500 ms) to be observable, so "did it accept that?" is a
-/// question it has to look twice to answer.
-///
-/// Note for whoever watches the agent work: error text living inside a
-/// `TextFormField` does not come back from `get_interactive_elements`, which
-/// stops at the field. Verifying that route means `take_screenshots`.
+/// One thing the finished form cannot give the agent: the error text lives
+/// inside each `TextFormField`, and `get_interactive_elements` stops at the
+/// field. The messages are only verifiable by screenshot. Rendering them as
+/// keyed `Text` widgets under each field would make them readable from the
+/// tree — a fair trade to discuss, and the reason the demo notes mention it.
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -29,7 +26,9 @@ class _SignupScreenState extends State<SignupScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _confirmPassword = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   bool _busy = false;
+  bool _submitted = false;
 
   @override
   void dispose() {
@@ -40,11 +39,54 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  /// Accepts anything, including nothing at all — that is the bug the demo
-  /// asks the agent to close. The keyboard is dismissed first so a screenshot
-  /// taken straight after shows the whole form rather than its top half.
+  static final _emailPattern = RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$');
+
+  String? _validateName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Enter your name';
+    }
+    return null;
+  }
+
+  String? _validateEmail(String? value) {
+    final email = value?.trim() ?? '';
+    if (email.isEmpty) {
+      return 'Enter your email';
+    }
+    if (!_emailPattern.hasMatch(email)) {
+      return 'That does not look like an email';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    final password = value ?? '';
+    if (password.isEmpty) {
+      return 'Choose a password';
+    }
+    if (password.length < 8) {
+      return 'Use at least 8 characters';
+    }
+    return null;
+  }
+
+  String? _validateConfirmation(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Type your password again';
+    }
+    if (value != _password.text) {
+      return 'The two passwords do not match';
+    }
+    return null;
+  }
+
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
+    setState(() => _submitted = true);
+    if (!_formKey.currentState!.validate()) {
+      debugPrint('[signup] blocked by validation');
+      return;
+    }
     setState(() => _busy = true);
     debugPrint('[signup] submit name="${_name.text}" email="${_email.text}"');
 
@@ -80,80 +122,92 @@ class _SignupScreenState extends State<SignupScreen> {
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Join Togeva',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: DemoTheme.ink,
-                    height: 1.1,
+            child: Form(
+              key: _formKey,
+              autovalidateMode: _submitted
+                  ? AutovalidateMode.onUserInteraction
+                  : AutovalidateMode.disabled,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Join Togeva',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      color: DemoTheme.ink,
+                      height: 1.1,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'It takes a minute. No card needed.',
-                  style: TextStyle(fontSize: 15, color: DemoTheme.muted),
-                ),
-                const SizedBox(height: 26),
-                const _FieldLabel('Full name'),
-                const SizedBox(height: 8),
-                TextField(
-                  key: const Key('signup_name_field'),
-                  controller: _name,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(hintText: 'Ada Lovelace'),
-                ),
-                const SizedBox(height: 18),
-                const _FieldLabel('Email'),
-                const SizedBox(height: 8),
-                TextField(
-                  key: const Key('signup_email_field'),
-                  controller: _email,
-                  keyboardType: TextInputType.emailAddress,
-                  autocorrect: false,
-                  decoration: const InputDecoration(
-                    hintText: 'you@example.com',
+                  const SizedBox(height: 8),
+                  const Text(
+                    'It takes a minute. No card needed.',
+                    style: TextStyle(fontSize: 15, color: DemoTheme.muted),
                   ),
-                ),
-                const SizedBox(height: 18),
-                const _FieldLabel('Password'),
-                const SizedBox(height: 8),
-                TextField(
-                  key: const Key('signup_password_field'),
-                  controller: _password,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    hintText: 'At least 8 characters',
+                  const SizedBox(height: 26),
+                  const _FieldLabel('Full name'),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    key: const Key('signup_name_field'),
+                    controller: _name,
+                    textCapitalization: TextCapitalization.words,
+                    validator: _validateName,
+                    decoration: const InputDecoration(hintText: 'Ada Lovelace'),
                   ),
-                ),
-                const SizedBox(height: 18),
-                const _FieldLabel('Confirm password'),
-                const SizedBox(height: 8),
-                TextField(
-                  key: const Key('signup_confirm_password_field'),
-                  controller: _confirmPassword,
-                  obscureText: true,
-                  decoration: const InputDecoration(hintText: 'Type it again'),
-                ),
-                const SizedBox(height: 26),
-                FilledButton(
-                  key: const Key('signup_submit_button'),
-                  onPressed: _busy ? null : _submit,
-                  child: _busy
-                      ? const SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.4,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Create account'),
-                ),
-              ],
+                  const SizedBox(height: 18),
+                  const _FieldLabel('Email'),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    key: const Key('signup_email_field'),
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    autocorrect: false,
+                    validator: _validateEmail,
+                    decoration: const InputDecoration(
+                      hintText: 'you@example.com',
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const _FieldLabel('Password'),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    key: const Key('signup_password_field'),
+                    controller: _password,
+                    obscureText: true,
+                    validator: _validatePassword,
+                    decoration: const InputDecoration(
+                      hintText: 'At least 8 characters',
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const _FieldLabel('Confirm password'),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    key: const Key('signup_confirm_password_field'),
+                    controller: _confirmPassword,
+                    obscureText: true,
+                    validator: _validateConfirmation,
+                    decoration: const InputDecoration(
+                      hintText: 'Type it again',
+                    ),
+                  ),
+                  const SizedBox(height: 26),
+                  FilledButton(
+                    key: const Key('signup_submit_button'),
+                    onPressed: _busy ? null : _submit,
+                    child: _busy
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.4,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('Create account'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
