@@ -40,6 +40,18 @@ Each row costs the agent a tap and a look: `enter_text`, `tap`,
 attempts. Watch it correct itself when a message does not appear where it
 expected — that correction is feedback no unit test gave it.
 
+## The wrinkle worth narrating
+
+`get_interactive_elements` stops at a `TextFormField` and does not return the
+error text inside it. So the obvious implementation — `validator:` plus
+`InputDecoration.errorText` — gives the agent a form it cannot read the errors
+off. Watch it notice, and reach for `take_screenshots` instead.
+
+That is the honest shape of the tool: the agent sees the running app the way
+a camera does, plus a tree of controls. If you want states it can read
+cheaply, render them as their own keyed `Text` widgets — the same instinct
+that makes a screen testable makes it agent-legible.
+
 ## After the demo
 
 `main` carries one finished implementation of this task, if you want a
