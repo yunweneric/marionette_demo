@@ -1,39 +1,40 @@
-# Demo 01 — "Can you see my app?"
+# Demo 02 — "Can you use my app?"
 
-Slide 21. Five minutes. Nothing here is wired: this branch exists so the
-agent has a screen to *look at*.
+Slide 23. Six minutes. Sign-in now works, so the agent can drive it:
+find → tap → type → tap → navigate → observe.
 
 ## Run it
 
 ```bash
-fvm flutter run            # debug mode, so MarionetteBinding is active
+fvm flutter run
 ```
-
-Copy the VM service URI the console prints (`ws://127.0.0.1:XXXXX/ws`).
 
 ## Prompt
 
 ```
-Connect to my Flutter application at <vm-service-uri> and inspect the
-available interactive elements.
+Log into the application and navigate to the dashboard.
 ```
+
+The credentials are on the login screen itself (`demo@flutter.dev` /
+`flutter123`), so the agent can read them rather than be told them — a small
+moment worth pointing out on stage.
 
 ## What to watch for
 
-The agent should come back with the login screen's controls, not a guess
-from the source:
+1. `get_interactive_elements` → it finds the two fields and the button.
+2. `enter_text` into `login_email_field` and `login_password_field`.
+3. `tap` on `login_submit_button`.
+4. Sign-in takes 700 ms, so the agent has to look *again* to see the result.
+5. `dashboard_greeting` reads "Hello, Ada".
 
-| Element              | Key                                   |
-| -------------------- | ------------------------------------- |
-| Email field          | `login_email_field`                   |
-| Password field       | `login_password_field`                |
-| Show/hide password   | `login_toggle_password_visibility`    |
-| Forgot password      | `login_forgot_password_button`        |
-| Log in               | `login_submit_button`                 |
-| Sign up              | `login_signup_button`                 |
+## Worth doing live
 
-## The point
+Give it the wrong password on purpose:
 
-The agent has a second source of truth (slide 22). Ask it something the code
-alone cannot answer — "which of these is currently on screen?", "what does
-the password field show after you tap the eye?" — and it has to look.
+```
+Try logging in with the password "wrong" and tell me what the app does.
+```
+
+It taps, waits, reads `login_error_banner`, and reports the app's own
+sentence — "That password is not right." Nothing in the source says which
+message wins for which failure; only the running app does.

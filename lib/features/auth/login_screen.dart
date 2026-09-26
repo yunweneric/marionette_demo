@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:marionette_demo/core/theme.dart';
+import 'package:marionette_demo/features/auth/fake_auth_service.dart';
+import 'package:marionette_demo/features/dashboard/dashboard_screen.dart';
 
-/// Demo 01 — "Can you see my app?"
+/// Demo 01 — "Can you see my app?" · Demo 02 — "Can you use my app?"
 ///
 /// Every control carries a `Key`, because that is what the agent gets back
 /// from `get_interactive_elements` and what it passes to `tap` and
@@ -23,11 +25,14 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _auth = const FakeAuthService();
 
   /// Flipped by `login_toggle_password_visibility`. A one-tap, one-observation
   /// change: ask the agent what the password field shows before and after
   /// tapping the eye, and it has to actually look twice.
   bool _obscure = true;
+  bool _busy = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -36,23 +41,33 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  /// Not wired to anything yet — demo 02 is where this screen starts going
-  /// somewhere.
-  ///
-  /// It does two things the agent can see: a `debugPrint`, which reaches
-  /// `get_logs` through the collector in `main.dart`, and a SnackBar, which
-  /// appears in the element tree for a few seconds and then does not. That
-  /// disappearing act is a good first lesson on stage: what the agent sees is
-  /// a moment, not a fact.
-  void _submit() {
-    debugPrint(
-      '[login] submit email=${_email.text} password=${'*' * _password.text.length}',
+  /// Signs in, then navigates. Deliberately asynchronous and deliberately
+  /// failable: the agent has to act, wait, and look again to know what
+  /// happened, which is the loop demo 02 is about.
+  Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+
+    final result = await _auth.signIn(
+      email: _email.text,
+      password: _password.text,
     );
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(
-        const SnackBar(content: Text('Sign-in is not wired up on this branch')),
-      );
+    if (!mounted) return;
+
+    setState(() => _busy = false);
+    if (!result.isSuccess) {
+      setState(() => _error = result.error);
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => DashboardScreen(displayName: result.displayName!),
+      ),
+    );
   }
 
   @override
@@ -85,7 +100,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     'Sign in to your Togeva account.',
                     style: TextStyle(fontSize: 15, color: DemoTheme.muted),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 20),
+                  Container(
+                    key: const Key('login_demo_credentials'),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: DemoTheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'Demo account — ${FakeAuthService.demoEmail} / ${FakeAuthService.demoPassword}',
+                      style: TextStyle(fontSize: 13, color: DemoTheme.muted),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   const _FieldLabel('Email'),
                   const SizedBox(height: 8),
                   TextField(
@@ -137,11 +165,50 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: const Text('Forgot password'),
                     ),
                   ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 4),
+                    Container(
+                      key: const Key('login_error_banner'),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: DemoTheme.negative.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            size: 18,
+                            color: DemoTheme.negative,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _error!,
+                              style: const TextStyle(
+                                color: DemoTheme.negative,
+                                fontSize: 13.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   FilledButton(
                     key: const Key('login_submit_button'),
-                    onPressed: _submit,
-                    child: const Text('Log in'),
+                    onPressed: _busy ? null : _submit,
+                    child: _busy
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.4,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('Log in'),
                   ),
                   const SizedBox(height: 16),
                   Row(
