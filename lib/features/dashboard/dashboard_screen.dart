@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:marionette_demo/core/theme.dart';
 
 /// Demo 02 — where a successful sign-in lands.
+///
+/// The greeting carries the name the sign-in returned, which is what makes it
+/// the proof the agent reports back: "Hello, Ada" can only appear after a
+/// real round trip through `FakeAuthService`. Reading `dashboard_greeting` is
+/// cheaper than a screenshot, so prefer it when you coach the agent.
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key, required this.displayName});
 
@@ -13,6 +18,9 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
+          // Pops back to the login screen. `press_back_button` does the same
+          // thing on Android; this gives the agent an in-app route out that
+          // works on both platforms.
           IconButton(
             key: const Key('dashboard_logout_button'),
             tooltip: 'Log out',
@@ -84,6 +92,8 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
+/// Static numbers, deliberately. Nothing here refreshes, retries or expires,
+/// so a demo that goes long does not drift out from under the presenter.
 class _BalanceCard extends StatelessWidget {
   const _BalanceCard();
 
@@ -99,6 +109,8 @@ class _BalanceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
+          // Keyed separately from the card so the agent can read the figure
+          // without parsing the whole container back out of the tree.
           Text(
             'Available balance',
             style: TextStyle(color: Colors.white70, fontSize: 14),
