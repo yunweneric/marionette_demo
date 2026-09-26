@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:marionette_demo/core/theme.dart';
+import 'package:marionette_demo/features/transactions/transaction.dart';
+import 'package:marionette_demo/features/transactions/transaction_list.dart';
 
 /// Demo 02 — where a successful sign-in lands.
 ///
@@ -86,6 +88,8 @@ class DashboardScreen extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 28),
+          const TransactionList(transactions: demoTransactions),
         ],
       ),
     );
