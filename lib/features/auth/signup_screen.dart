@@ -7,6 +7,16 @@ import 'package:marionette_demo/features/dashboard/dashboard_screen.dart';
 /// The form has no validation at all. An empty submit creates an account, and
 /// so does "not-an-email". That is the task: the agent adds the rules, then
 /// drives every state in the running app to prove they hold.
+///
+/// Two details that make the demo work. The fields are plain `TextField`s,
+/// so the agent has to choose its own approach — `Form` plus validators, or
+/// error state held here and rendered as keyed `Text`. And the submit is
+/// slow enough (500 ms) to be observable, so "did it accept that?" is a
+/// question it has to look twice to answer.
+///
+/// Note for whoever watches the agent work: error text living inside a
+/// `TextFormField` does not come back from `get_interactive_elements`, which
+/// stops at the field. Verifying that route means `take_screenshots`.
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -30,6 +40,9 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
+  /// Accepts anything, including nothing at all — that is the bug the demo
+  /// asks the agent to close. The keyboard is dismissed first so a screenshot
+  /// taken straight after shows the whole form rather than its top half.
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     setState(() => _busy = true);
@@ -39,6 +52,9 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!mounted) return;
     setState(() => _busy = false);
 
+    // pushReplacement, not push: after signing up there is nothing useful
+    // behind this screen, and a back button that returns to a filled-in
+    // sign-up form is its own small confusion on stage.
     await Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (_) => DashboardScreen(
