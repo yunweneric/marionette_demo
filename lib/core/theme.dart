@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 
 /// One place for colour and shape, so every demo screen looks like the same
 /// product on a projector: high contrast, large hit targets, no gradients.
+///
+/// The hit targets are not only an accessibility habit here. `tap` resolves a
+/// key or a string to an element and taps the centre of its bounds, so a
+/// 54-pixel button is a button that gets hit on the first try in front of an
+/// audience — and a 28-pixel one is a demo that misses.
 abstract final class DemoTheme {
   static const seed = Color(0xFF4285F4);
   static const ink = Color(0xFF1F1F1F);
@@ -63,6 +68,7 @@ abstract final class DemoTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
+          // Full-width and tall: see the class doc on why bounds matter.
           minimumSize: const Size.fromHeight(54),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           shape: RoundedRectangleBorder(

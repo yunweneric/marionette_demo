@@ -6,7 +6,13 @@ import 'package:marionette_demo/core/theme.dart';
 /// Every control carries a `Key`, because that is what the agent gets back
 /// from `get_interactive_elements` and what it passes to `tap` and
 /// `enter_text`. A screen without keys is still drivable by visible text, but
-/// keys survive copy changes and translation.
+/// keys survive copy changes and translation — and this app is bilingual
+/// French/English in the audience's head even when the strings are not.
+///
+/// Naming convention for the keys, worth keeping if you extend this app:
+/// `<screen>_<thing>_<kind>` — `login_email_field`, `login_submit_button`.
+/// The agent reads them back as a flat list, so the prefix is what tells it
+/// which screen it is standing on.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -17,6 +23,10 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
+
+  /// Flipped by `login_toggle_password_visibility`. A one-tap, one-observation
+  /// change: ask the agent what the password field shows before and after
+  /// tapping the eye, and it has to actually look twice.
   bool _obscure = true;
 
   @override
@@ -27,7 +37,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   /// Not wired to anything yet — demo 02 is where this screen starts going
-  /// somewhere. It logs, so `get_logs` has something to show.
+  /// somewhere.
+  ///
+  /// It does two things the agent can see: a `debugPrint`, which reaches
+  /// `get_logs` through the collector in `main.dart`, and a SnackBar, which
+  /// appears in the element tree for a few seconds and then does not. That
+  /// disappearing act is a good first lesson on stage: what the agent sees is
+  /// a moment, not a fact.
   void _submit() {
     debugPrint(
       '[login] submit email=${_email.text} password=${'*' * _password.text.length}',
@@ -51,6 +67,8 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Dash's employer, and a widget with no key on purpose:
+                  // decoration the agent has no reason to touch.
                   const FlutterLogo(size: 48),
                   const SizedBox(height: 28),
                   const Text(
