@@ -21,12 +21,16 @@ void main() {
   }
 
   final logs = PrintLogCollector();
-  MarionetteBinding.ensureInitialized(
-    MarionetteConfiguration(logCollector: logs),
-  );
 
+  // The binding must be initialized in the same zone that calls runApp,
+  // otherwise Flutter throws a "Zone mismatch" assertion.
   runZoned(
-    () => runApp(const MarionetteDemoApp()),
+    () {
+      MarionetteBinding.ensureInitialized(
+        MarionetteConfiguration(logCollector: logs),
+      );
+      runApp(const MarionetteDemoApp());
+    },
     zoneSpecification: ZoneSpecification(
       print: (self, parent, zone, line) {
         parent.print(zone, line);
